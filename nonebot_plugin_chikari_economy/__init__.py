@@ -1,6 +1,4 @@
 from nonebot import require,on_command
-from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
-from nonebot.permission import SUPERUSER
 require("nonebot_plugin_localstore")
 
 from nonebot.plugin import PluginMetadata
@@ -14,12 +12,19 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"}
 )
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 from .data_handles import def_money_type as def_money_type
 from .data_handles import set_money as set_money
 from .data_handles import add_money as add_money
 from .data_handles import inquire_money as inquire_money
+
+__all__ = (
+    def_money_type,
+    set_money,
+    add_money,
+    inquire_money,
+)
 
 from .handles import message_Handles
 
