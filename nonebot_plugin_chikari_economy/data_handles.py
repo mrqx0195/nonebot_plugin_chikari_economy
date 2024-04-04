@@ -67,9 +67,10 @@ def data_set(uid: str,key: str,value):
     
     global data
     if uid not in data.keys:
-        data[uid] = {key: value}
-    else:
-        data[uid][key] = value
+        data[uid] = {
+            "defaultmoney": 0.0
+        }
+    data[uid][key] = value
     file_save()
     return
 
@@ -152,6 +153,6 @@ def inquire_money(uid: str,id: str):
     global data
     if id not in configdata["money_types"].keys:
         raise NameError(f"Undefined money type:{id}")
-    if id not in data[uid]:
-        return 0
+    if id not in data[uid].keys:
+        return 0.0
     return data[uid][id]

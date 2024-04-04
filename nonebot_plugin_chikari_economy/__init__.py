@@ -9,12 +9,12 @@ __plugin_meta__ = PluginMetadata(
     name="Chikari_economy",
     description="一个经济插件（库），可由其他插件调用，以便插件间的经济联动",
     usage="",
-    type="application",
+    type="library",
     homepage="https://github.com/mrqx0195/nonebot_plugin_chikari_economy",
     supported_adapters={"~onebot.v11"}
 )
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from .data_handles import def_money_type as def_money_type
 from .data_handles import set_money as set_money
