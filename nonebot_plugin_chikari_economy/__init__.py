@@ -14,7 +14,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"}
 )
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 from .data_handles import def_money_type as def_money_type
 from .data_handles import set_money as set_money
