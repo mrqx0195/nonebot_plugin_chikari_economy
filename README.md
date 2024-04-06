@@ -73,8 +73,8 @@ _✨ NoneBot 经济插件（库） ✨_
 你可以通过以下方法使用本插件的功能
 
 ```
-import nonebot_plugin_chikari_economy
 require("nonebot_plugin_chikari_economy")
+import nonebot_plugin_chikari_economy
 ```
 
 #### def_money_type
