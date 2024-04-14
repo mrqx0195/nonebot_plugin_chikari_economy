@@ -16,7 +16,7 @@ class message_Handles():
         uid: str = event.get_user_id()
         s = f"{uid}的{command}量："
         try:
-            s += data_handles.inquire_money(command)
+            s += data_handles.get_user_money(uid,command)
         except NameError:
             s = "未注册的货币类型！"
         await matcher.finish(s)
@@ -28,7 +28,7 @@ class message_Handles():
         """
         uid: str = event.get_user_id()
         s = f"{uid}的所有货币量："
-        for i in data_handles.configdata["money_types"].keys:
-            s += "\n" + data_handles.inquire_money(i)
+        for i in data_handles.get_money_dict(uid).keys:
+            s += "\n" + data_handles.get_money_config(i)[0] + data_handles.get_user_money(uid,i)
         await matcher.finish(s)
         

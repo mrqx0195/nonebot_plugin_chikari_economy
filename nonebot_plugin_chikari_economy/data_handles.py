@@ -1,132 +1,71 @@
-import json
-import os
+from ast import literal_eval
 
-from pathlib import Path
-import nonebot_plugin_localstore as store
+from nonebot_plugin_orm import Model,async_scoped_session,get_session
+from sqlalchemy.orm import Mapped, mapped_column
 
-plugin_data_file: Path = store.get_data_file("chikari_economy", "data.json")
-plugin_config_file: Path = store.get_config_file("chikari_economy", "config.json")
-
-if not os.path.exists(plugin_data_file):
-    f = open(plugin_data_file,'w')
-    f.close
-with open(plugin_data_file,encoding='utf-8')as datafile:
-    datastr = datafile.read()
-    if not os.path.exists(plugin_data_file) or not datastr:
-        f = open(plugin_data_file,'w')
-        init_data = {
-            
-        }
-        json.dump(init_data,f,indent=4)
-        f.close
-        data = init_data
-    else:
-        data = json.loads(datastr,strict=False)
-        
-if not os.path.exists(plugin_config_file):
-    f = open(plugin_config_file,'w')
-    f.close
-with open(plugin_config_file,encoding='utf-8')as configfile:
-    configstr = configfile.read()
-    if not os.path.exists(plugin_config_file) or not configstr:
-        f = open(plugin_config_file,'w')
-        init_data = {
-            "money_types":{"defaultmoney":("Chikari币","Chikari_economy提供的默认钱币")}
-        }
-        json.dump(init_data,f,indent=4)
-        f.close
-        configdata = init_data
-    else:
-        configdata = json.loads(configstr,strict=False)
-
-def file_read():
-    """数据文件初始化及载入
-    """
+class Data(Model):
+    uid: Mapped[str] = mapped_column(primary_key=True)
+    money: Mapped[str] = "{}"
     
-    global data
-    global configdata
-    if not os.path.exists(plugin_data_file):
-        f = open(plugin_data_file,'w')
-        f.close
-    with open(plugin_data_file,encoding='utf-8')as datafile:
-        datastr = datafile.read()
-        if not os.path.exists(plugin_data_file) or not datastr:
-            f = open(plugin_data_file,'w')
-            init_data = {
-                
-            }
-            json.dump(init_data,f,indent=4)
-            f.close
-            data = init_data
-        else:
-            data = json.loads(datastr,strict=False)
-            
-    if not os.path.exists(plugin_config_file):
-        f = open(plugin_config_file,'w')
-        f.close
-    with open(plugin_config_file,encoding='utf-8')as configfile:
-        configstr = configfile.read()
-        if not os.path.exists(plugin_config_file) or not configstr:
-            f = open(plugin_config_file,'w')
-            init_data = {
-                "money_types":{"defaultmoney":("Chikari币","Chikari_economy提供的默认钱币")}
-            }
-            json.dump(init_data,f,indent=4)
-            f.close
-            configdata = init_data
-        else:
-            configdata = json.loads(configstr,strict=False)
+class ConfigData(Model):
+    id: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str] = "Unnamed money"
+    description: Mapped[str] = "Unnamed money"
 
-def file_save():
-    """将内存中的数据保存至文件
-    """
-    
-    global data
-    global configdata
-    f = open(plugin_data_file,'w')
-    json.dump(data,f,indent=4)
-    f.close
-    f = open(plugin_config_file,'w')
-    json.dump(configdata,f,indent=4)
-    f.close
-
-def data_set(uid: str,key: str,value):
-    """设置特定用户的特定数值
+async def get_money_dict(uid: str) -> dict:
+    """获取用户的货币字典
 
     Args:
         uid (str): 用户id
-        key (str): 数据键值
-        value (_type_): 数据
+
+    Returns:
+        dict: 用户的货币字典
     """
     
-    global data
-    file_read()
-    if uid not in data.keys:
-        data[uid] = {
-            "defaultmoney": 0.0
-        }
-    data[uid][key] = value
-    file_save()
-    return
-
-def configdata_set(key: str,value):
-    """设置配置文件
+    session = get_session()
+    async with session.begin():
+        dat = await session.get(Data, uid)
+        if not dat:
+            dat = Data(uid = uid,money = str({"defaultmoney": 0.0}))
+            session.add(dat)
+        return literal_eval(dat.money)
+    
+async def get_money_config(id: str) -> tuple:
+    """获取货币的信息
 
     Args:
-        key (str): 配置键值
-        value (_type_): 数据
+        id (str): 货币的id
+
+    Returns:
+        tuple: 货币的信息，应当为(name, description)
     """
     
-    global configdata
-    file_read()
-    configdata[key] = value
-    file_save()
-    return
+    session = get_session()
+    async with session.begin():
+        con = await session.get(ConfigData, id)
+        if not con:
+            raise NameError(f"Undefined money type:{id}")
+        return (con.name, con.description)
+    
+async def get_user_money(uid: str,id: str) -> float:
+    """获取用户的单种货币
 
-def def_money_type(id: str,name: str,description: str):
+    Args:
+        uid (str): 用户id
+
+    Returns:
+        float: 这种货币的量
+    """
+    
+    d = get_money_dict(uid)
+    if id not in d.keys and get_money_config(id):
+        return 0.0
+    return d[id]
+
+async def def_money_type(id: str,name: str = "Unnamed money",description: str = "Unnamed money") -> tuple:
     """定义一种新的货币种类
     
-    不使用此方法定义货币直接使用可能会出现意料之外的错误
+    不使用此方法定义货币直接使用可能会出现错误
     
     id相同时，新的定义会覆盖旧的定义，但已有的货币量不变
 
@@ -138,30 +77,34 @@ def def_money_type(id: str,name: str,description: str):
     Returns:
         tuple: 一个二元组，应当为(name, description)
     """
-    global configdata
-    file_read()
-    configdata_set(id,(name, description))
-    return configdata["money_types"][id]
+    
+    session = get_session()
+    async with session.begin():
+        con = await session.get(ConfigData, id)
+        con = ConfigData(id = id,name = name,description = description)
+        session.add(con)
+        return (con.name, con.description)
 
-def set_money(uid: str,id: str,value: float):
+async def set_money(uid: str,id: str,value: float) -> None:
     """设置用户的某种货币数量
 
     Args:
         uid (str): 用户id
         id (str): 货币id
         value (float): 货币要设置成的值
-
-    Returns:
-        float: 货币设置后的值
     """
-    global data,configdata
-    file_read()
-    if id not in configdata["money_types"].keys:
-        raise NameError(f"Undefined money type:{id}")
-    data_set(uid,id,float(value))
-    return data[uid][id]
+    
+    session = get_session()
+    async with session.begin():
+        dat = await session.get(Data, uid)
+        if not dat and get_money_config(id):
+            dat = Data(uid = uid,money = str({"defaultmoney": 0.0,id: value}))
+        else:
+            dat = Data(uid = uid,money = str(get_money_dict(uid).update({id: value})))
+        session.add(dat)
+    return 
 
-def add_money(uid: str,id: str,value: float):
+def add_money(uid: str,id: str,value: float) -> float:
     """增加（或减少）用户的某种货币数量
 
     Args:
@@ -172,27 +115,6 @@ def add_money(uid: str,id: str,value: float):
     Returns:
         float: 货币增加（或减少）后的值
     """
-    global data
-    file_read()
-    if id not in configdata["money_types"].keys:
-        raise NameError(f"Undefined money type:{id}")
-    set_money(uid,id,data[uid][id] + value)
-    return data[uid][id]
-
-def inquire_money(uid: str,id: str):
-    """查询用户的某种货币数量
-
-    Args:
-        uid (str): 用户id
-        id (str): 货币id
-
-    Returns:
-        float: 货币当前数量
-    """
-    global data
-    file_read()
-    if id not in configdata["money_types"].keys:
-        raise NameError(f"Undefined money type:{id}")
-    if id not in data[uid].keys:
-        return 0.0
-    return data[uid][id]
+    
+    set_money(uid,id,get_user_money(uid,id) + value)
+    return get_user_money(uid,id)

@@ -1,5 +1,5 @@
 from nonebot import require,on_command
-require("nonebot_plugin_localstore")
+require("nonebot_plugin_orm")
 
 from nonebot.plugin import PluginMetadata
 
@@ -17,13 +17,13 @@ __version__ = "0.0.7"
 from .data_handles import def_money_type as def_money_type
 from .data_handles import set_money as set_money
 from .data_handles import add_money as add_money
-from .data_handles import inquire_money as inquire_money
+from .data_handles import get_user_money as get_user_money
 
 __all__ = (
     def_money_type,
     set_money,
     add_money,
-    inquire_money,
+    get_user_money,
 )
 
 from .handles import message_Handles
