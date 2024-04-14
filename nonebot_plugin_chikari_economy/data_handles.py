@@ -7,8 +7,6 @@ import nonebot_plugin_localstore as store
 plugin_data_file: Path = store.get_data_file("chikari_economy", "data.json")
 plugin_config_file: Path = store.get_config_file("chikari_economy", "config.json")
 
-#用户数据文件初始化及载入
-
 if not os.path.exists(plugin_data_file):
     f = open(plugin_data_file,'w')
     f.close
@@ -25,8 +23,6 @@ with open(plugin_data_file,encoding='utf-8')as datafile:
     else:
         data = json.loads(datastr,strict=False)
         
-#配置数据文件初始化及载入
-
 if not os.path.exists(plugin_config_file):
     f = open(plugin_config_file,'w')
     f.close
@@ -42,6 +38,44 @@ with open(plugin_config_file,encoding='utf-8')as configfile:
         configdata = init_data
     else:
         configdata = json.loads(configstr,strict=False)
+
+def file_read():
+    """数据文件初始化及载入
+    """
+    
+    global data
+    global configdata
+    if not os.path.exists(plugin_data_file):
+        f = open(plugin_data_file,'w')
+        f.close
+    with open(plugin_data_file,encoding='utf-8')as datafile:
+        datastr = datafile.read()
+        if not os.path.exists(plugin_data_file) or not datastr:
+            f = open(plugin_data_file,'w')
+            init_data = {
+                
+            }
+            json.dump(init_data,f,indent=4)
+            f.close
+            data = init_data
+        else:
+            data = json.loads(datastr,strict=False)
+            
+    if not os.path.exists(plugin_config_file):
+        f = open(plugin_config_file,'w')
+        f.close
+    with open(plugin_config_file,encoding='utf-8')as configfile:
+        configstr = configfile.read()
+        if not os.path.exists(plugin_config_file) or not configstr:
+            f = open(plugin_config_file,'w')
+            init_data = {
+                "money_types":{"defaultmoney":("Chikari币","Chikari_economy提供的默认钱币")}
+            }
+            json.dump(init_data,f,indent=4)
+            f.close
+            configdata = init_data
+        else:
+            configdata = json.loads(configstr,strict=False)
 
 def file_save():
     """将内存中的数据保存至文件
@@ -66,6 +100,7 @@ def data_set(uid: str,key: str,value):
     """
     
     global data
+    file_read()
     if uid not in data.keys:
         data[uid] = {
             "defaultmoney": 0.0
@@ -83,6 +118,7 @@ def configdata_set(key: str,value):
     """
     
     global configdata
+    file_read()
     configdata[key] = value
     file_save()
     return
@@ -103,6 +139,7 @@ def def_money_type(id: str,name: str,description: str):
         tuple: 一个二元组，应当为(name, description)
     """
     global configdata
+    file_read()
     configdata_set(id,(name, description))
     return configdata["money_types"][id]
 
@@ -118,6 +155,7 @@ def set_money(uid: str,id: str,value: float):
         float: 货币设置后的值
     """
     global data,configdata
+    file_read()
     if id not in configdata["money_types"].keys:
         raise NameError(f"Undefined money type:{id}")
     data_set(uid,id,float(value))
@@ -135,6 +173,7 @@ def add_money(uid: str,id: str,value: float):
         float: 货币增加（或减少）后的值
     """
     global data
+    file_read()
     if id not in configdata["money_types"].keys:
         raise NameError(f"Undefined money type:{id}")
     set_money(uid,id,data[uid][id] + value)
@@ -151,6 +190,7 @@ def inquire_money(uid: str,id: str):
         float: 货币当前数量
     """
     global data
+    file_read()
     if id not in configdata["money_types"].keys:
         raise NameError(f"Undefined money type:{id}")
     if id not in data[uid].keys:

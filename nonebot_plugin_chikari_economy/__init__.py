@@ -12,7 +12,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={}
 )
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 from .data_handles import def_money_type as def_money_type
 from .data_handles import set_money as set_money
